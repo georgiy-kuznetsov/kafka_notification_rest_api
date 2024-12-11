@@ -1,0 +1,29 @@
+server:
+  port: 8088
+spring:
+  application:
+    name: kafkanotificationrestapi
+
+  r2dbc:
+    url: r2dbc:postgres://postgres:5432/notification_rest_api
+    username: postgres
+    password: root
+
+  flyway:
+    url: jdbc:postgresql://postgres:5432/notification_rest_api
+    locations: classpath:db/migration
+    user: postgres
+    password: root
+
+  kafka:
+    consumer:
+      group-id: notification_consumers
+      enable-auto-commit: true
+      bootstrap-servers: kafka:9092
+    producer:
+      bootstrap-servers: kafka:9092
+      acks: all
+      retries: 3
+      batch-size: 16384
+      linger-ms: 1
+      buffer-memory: 33554432
