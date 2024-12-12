@@ -16,17 +16,19 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
 public class NotificationDto {
+    private Long id;
     private String message;
     private NotificationMessageType messageType;
     private String error;
     private String userUid;
-    private NotificationStatus notificationStatus;
     private NotificationTriggerCode triggerCode;
     private NotificationObjectType objectType;
     private String objectId;
     private String subject;
     private NotificationCreator createdBy;
     private boolean hasConfirmOtp;
+    private NotificationStatus status;
+    private LocalDateTime expirationDate;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
 }

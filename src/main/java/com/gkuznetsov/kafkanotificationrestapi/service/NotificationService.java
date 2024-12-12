@@ -11,11 +11,13 @@ import com.gkuznetsov.kafkanotificationrestapi.exception.ApiException;
 import com.gkuznetsov.kafkanotificationrestapi.exception.NotFoundException;
 import com.gkuznetsov.kafkanotificationrestapi.mapper.NotificationMapper;
 import com.gkuznetsov.kafkanotificationrestapi.repository.NotificationRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
+import reactor.kafka.receiver.KafkaReceiver;
+import reactor.kafka.receiver.ReceiverRecord;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -26,6 +28,8 @@ import java.util.List;
 public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final NotificationMapper notificationMapper;
+    private final ObjectMapper objectMapper;
+    private final KafkaReceiver<String, String> kafkaReceiver;
 
     public Mono<GetAllNotificationsResponseDto> getNotifications(int page, int pageSize) {
         int offset = (page - 1) * pageSize;
@@ -73,26 +77,32 @@ public class NotificationService {
                 });
     }
 
-    @KafkaListener(topics = "notification-topic", groupId = "notification_consumers")
-    public void consumeNotification(String message) {
-        Mono.fromCallable( () -> {
-            ObjectMapper objectMapper = new ObjectMapper();
-            NotificationEntity notificationEntity;
+    @PostConstruct
+    public void startListening() {
+        kafkaReceiver.receive()
+                .doOnNext(this::processMessage)
+                .doOnError(e -> log.error("Error processing message: {}", e.getMessage()))
+                .subscribe();
+    }
 
-            try {
-                notificationEntity = objectMapper.readValue(message, NotificationEntity.class);
-            } catch (JsonProcessingException e) {
-                throw new ApiException("Error parsing notification from json", "JSON_PARSING_ERROR");
-            }
+    private void processMessage(ReceiverRecord<String, String> record) {
+        String message = record.value();
+        log.info("Received message: {}", message);
 
-            notificationEntity.setStatus(NotificationStatus.NEW);
-            notificationEntity.setExpirationDate( LocalDateTime.now().plusSeconds(86_400) );
-            notificationEntity.setCreatedAt( LocalDateTime.now() );
-            notificationEntity.setModifiedAt( LocalDateTime.now() );
+        NotificationEntity notificationEntity = parseMessage(message);
+        notificationEntity.setStatus(NotificationStatus.NEW);
+        notificationEntity.setExpirationDate( LocalDateTime.now().plusSeconds(86_400) );
+        notificationEntity.setCreatedAt( LocalDateTime.now() );
+        notificationEntity.setModifiedAt( LocalDateTime.now() );
 
-            return notificationRepository.save(notificationEntity);
-        })
-        .doOnError( e -> log.error("IN consume of NotificationService: {}", e.getMessage()) )
-        .subscribe();
+        notificationRepository.save(notificationEntity).subscribe();
+    }
+
+    private NotificationEntity parseMessage(String message) {
+        try {
+            return objectMapper.readValue(message, NotificationEntity.class);
+        } catch (JsonProcessingException e) {
+            throw new ApiException("Error parsing notification from json", "JSON_PARSING_ERROR");
+        }
     }
 }
