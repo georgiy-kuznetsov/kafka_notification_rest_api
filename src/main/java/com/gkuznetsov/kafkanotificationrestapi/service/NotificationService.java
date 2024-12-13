@@ -5,7 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gkuznetsov.kafkanotificationrestapi.dto.GetAllNotificationsResponseDto;
 import com.gkuznetsov.kafkanotificationrestapi.dto.NotificationDto;
 import com.gkuznetsov.kafkanotificationrestapi.dto.UpdateNotificationRequestDto;
+import com.gkuznetsov.kafkanotificationrestapi.entity.NotificationCreator;
 import com.gkuznetsov.kafkanotificationrestapi.entity.NotificationEntity;
+import com.gkuznetsov.kafkanotificationrestapi.entity.NotificationObjectType;
 import com.gkuznetsov.kafkanotificationrestapi.entity.NotificationStatus;
 import com.gkuznetsov.kafkanotificationrestapi.exception.ApiException;
 import com.gkuznetsov.kafkanotificationrestapi.exception.NotFoundException;
@@ -81,26 +83,30 @@ public class NotificationService {
     public void startListening() {
         kafkaReceiver.receive()
                 .doOnNext(this::processMessage)
-                .doOnError(e -> log.error("Error processing message: {}", e.getMessage()))
                 .subscribe();
     }
 
     private void processMessage(ReceiverRecord<String, String> record) {
         String message = record.value();
-        log.info("Received message: {}", message);
 
         NotificationEntity notificationEntity = parseMessage(message);
+
         notificationEntity.setStatus(NotificationStatus.NEW);
         notificationEntity.setExpirationDate( LocalDateTime.now().plusSeconds(86_400) );
         notificationEntity.setCreatedAt( LocalDateTime.now() );
         notificationEntity.setModifiedAt( LocalDateTime.now() );
 
-        notificationRepository.save(notificationEntity).subscribe();
+        notificationRepository.save(notificationEntity)
+                .onErrorResume(e -> {
+                    log.error("Error processing message: {}", e.getMessage());
+                    return Mono.empty();
+                })
+                .subscribe();
     }
 
     private NotificationEntity parseMessage(String message) {
         try {
-            return objectMapper.readValue(message, NotificationEntity.class);
+            return notificationMapper.map( objectMapper.readValue(message, NotificationDto.class) );
         } catch (JsonProcessingException e) {
             throw new ApiException("Error parsing notification from json", "JSON_PARSING_ERROR");
         }

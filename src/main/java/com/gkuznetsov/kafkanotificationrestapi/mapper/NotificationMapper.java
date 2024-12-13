@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotificationMapper {
     public NotificationDto map(NotificationEntity notification) {
-        return NotificationDto.builder()
+            return NotificationDto.builder()
                 .id( notification.getId() )
                 .message( notification.getMessage() )
                 .messageType( notification.getMessageType() )
@@ -24,6 +24,22 @@ public class NotificationMapper {
                 .expirationDate( notification.getExpirationDate() )
                 .createdAt( notification.getCreatedAt() )
                 .modifiedAt( notification.getModifiedAt() )
+                .build();
+    }
+
+    public NotificationEntity map(NotificationDto dto) {
+            return NotificationEntity.builder()
+                .message( dto.getMessage() )
+                .messageType( dto.getMessageType() )
+                .error( dto.getError() )
+                .userUid( dto.getUserUid() )
+                .status( dto.getStatus() )
+                .triggerCode( dto.getTriggerCode() )
+                .objectType( dto.getObjectType() )
+                .objectId( dto.getObjectId() )
+                .subject( dto.getSubject() )
+                .createdBy( dto.getCreatedBy() )
+                .hasConfirmOtp( dto.isHasConfirmOtp() )
                 .build();
     }
 
@@ -45,5 +61,6 @@ public class NotificationMapper {
                 .createdBy(notificationCreator)
                 .hasConfirmOtp( requestDto.getHasConfirmOtp() )
                 .build();
+
     }
 }
