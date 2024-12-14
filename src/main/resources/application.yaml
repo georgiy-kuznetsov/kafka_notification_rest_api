@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: kafkanotificationrestapi
+  profiles:
+    default: prod
 
   r2dbc:
     url: r2dbc:postgres://postgres:5432/notification_rest_api
@@ -25,6 +27,8 @@ spring:
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       enable-auto-commit: true
     producer:
+      acks: all
+      retries: 3
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
     listener:

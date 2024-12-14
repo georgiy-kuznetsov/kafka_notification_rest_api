@@ -1,0 +1,275 @@
+openapi: 3.0.3
+info:
+  title: KafkaNotification Rest Api
+  description: |-
+    Документация предназначения для работы с REST API проекта [KafkaNotification Rest Api](https://gitlab.leantech.ai/javateamio/kafka-notification-rest-api)
+
+  version: 1.0.0
+paths:
+  /api/v2/kafka-messages:
+    post:
+      tags:
+        - Test send message to kafka
+      summary: Отправить сообщение в Kafka (для тестирования)
+      operationId: sendMessageToKafka
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewMessageRequest'
+      responses:
+        '200':
+          description: Пользователь успешно добавлен
+        '400':
+          description: При ошибках валидации запроса
+        '409':
+          description: При неудачном выполнении запроса
+  /api/v1/notifications:
+    get:
+      tags:
+        - notifications
+      summary: Получить список обработанных сообщений
+      parameters:
+        - name: page
+          in: query
+          description: Номер страницы
+          required: false
+          schema:
+            type: integer
+            example: 1
+        - name: pageSize
+          in: query
+          description: Количество записей на странице
+          required: false
+          schema:
+            type: integer
+            example: 24
+      operationId: getAllNotifications
+      responses:
+        '200':
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/NotificationsPaginate'
+        '409':
+          description: При неудачном выполнении запроса
+  /api/v1/notificatins/{id}:
+    parameters:
+      - name: id
+        in: path
+        description: Идентификатор сообщения
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - notifications
+      summary: Получить сообщение по ID
+      description: Возвращает сообщение с соответсвующим ID.
+      operationId: getNotificationById
+      responses:
+        '200':
+          description: Сообщение найдено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Notification'
+        '400':
+          description: При отправке некорректного идентификатора
+        '404':
+          description: Сообщение не найдено
+        '409':
+          description: При неудачном выполнении запроса
+    put:
+      tags:
+        - notifications
+      summary: Изменить статус сообщения
+      description: Изменить статус сообщения с соответствующим ID.
+      operationId: changeStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRequest'
+      responses:
+        '200':
+          description: Статус сообщеине успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteNotification'
+        '400':
+          description: При отправке некорректного идентификатора
+        '404':
+          description: Сообщение не найдено
+        '409':
+          description: При неудачном выполнении запроса
+
+components:
+  schemas:
+    NewMessageRequest:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Some message
+        message_type:
+          type: string
+          description: Доступные значения
+          example: EXTERNAL
+        error:
+          type: string
+          example: Some error
+        user_uid:
+          type: string
+          example: d809cb7b-8ca0-4f42-8fc0-e1e4240bd749
+        trigger_code:
+          type: string
+          example: USER_REGISTRATION_1
+        object_type:
+          type: string
+          example: USER
+        object_id:
+          type: string
+          example: d809cb7b-8ca0-4f42-8fc0-e1e4240bd749
+        subject:
+          type: string
+          example: Some subject
+        created_by:
+          type: string
+          example: OPERATOR
+        has_confirm_otp:
+          type: string
+          example: true
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        message:
+          type: string
+          example: Some message
+        message_type:
+          type: string
+          description: Доступные значения
+          example: EXTERNAL
+        error:
+          type: string
+          example: Some error
+        user_uid:
+          type: string
+          example: d809cb7b-8ca0-4f42-8fc0-e1e4240bd749
+        trigger_code:
+          type: string
+          example: USER_REGISTRATION_1
+        object_type:
+          type: string
+          example: USER
+        object_id:
+          type: string
+          example: d809cb7b-8ca0-4f42-8fc0-e1e4240bd749
+        subject:
+          type: string
+          example: Some subject
+        created_by:
+          type: string
+          example: OPERATOR
+        has_confirm_otp:
+          type: string
+          example: true
+        status:
+          type: string
+          example: NEW
+        expiration_date:
+          type: string
+          format: date-time
+          example: "2024-12-01T10:15:30Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-12-01T10:15:30Z"
+        modified_at:
+          type: string
+          format: date-time
+          example: "2024-12-01T10:15:30Z"
+    CompleteNotification:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        message:
+          type: string
+          example: Some message
+        message_type:
+          type: string
+          description: Доступные значения
+          example: EXTERNAL
+        error:
+          type: string
+          example: Some error
+        user_uid:
+          type: string
+          example: d809cb7b-8ca0-4f42-8fc0-e1e4240bd749
+        trigger_code:
+          type: string
+          example: USER_REGISTRATION_1
+        object_type:
+          type: string
+          example: USER
+        object_id:
+          type: string
+          example: d809cb7b-8ca0-4f42-8fc0-e1e4240bd749
+        subject:
+          type: string
+          example: Some subject
+        created_by:
+          type: string
+          example: OPERATOR
+        has_confirm_otp:
+          type: string
+          example: true
+        status:
+          type: string
+          example: COMPLETE
+        expiration_date:
+          type: string
+          format: date-time
+          example: "2024-12-01T10:15:30Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-12-01T10:15:30Z"
+        modified_at:
+          type: string
+          format: date-time
+          example: "2024-12-01T10:15:30Z"
+    NotificationsPaginate:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+        totalNotifications:
+          type: integer
+          example: 1
+        currentPage:
+          type: integer
+          example: 1
+        pageSize:
+          type: integer
+          example: 24
+        totalPages:
+          type: integer
+          example: 1
+    UpdateRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          example: COMPLETE

@@ -20,7 +20,7 @@ import java.util.Map;
 
 @EnableKafka
 @Configuration
-//@Profile("prod")
+@Profile("prod")
 public class KafkaConfig {
     @Value("${spring.kafka.consumer.group-id}")
     private String group;
